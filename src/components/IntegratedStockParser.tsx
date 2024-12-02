@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Alert, AlertTitle } from "@/components/ui/alert";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 import { FileUploadSection } from "./FileUploadSection";
 import { StockTable } from "./StockTable";
 import { parseCSVFile } from "@/utils/fileParser";
@@ -40,7 +46,7 @@ const IntegratedStockParser = () => {
     fileType: keyof FileState
   ) => {
     if (!event.target.files?.length) return;
-    
+
     setLoading(true);
     setErrors([]);
     const uploadedFiles = Array.from(event.target.files);
@@ -106,10 +112,7 @@ const IntegratedStockParser = () => {
 
   const handleProcessFiles = () => {
     const allRequiredFilesUploaded =
-      files.internal &&
-      files.fba &&
-      files.zfs &&
-      files.skuEanMapper;
+      files.internal && files.fba && files.zfs && files.skuEanMapper;
 
     if (!allRequiredFilesUploaded) {
       setErrors((prev) => [...prev, "Please upload all required files first"]);
@@ -140,7 +143,15 @@ const IntegratedStockParser = () => {
         integrated: integratedData,
       }));
     }
-  }, [parsedData.internal, parsedData.fba, parsedData.zfs, parsedData.fbaShipments, parsedData.zfsShipments, parsedData.zfsShipmentsReceived, parsedData.skuEanMapper]);
+  }, [
+    parsedData.internal,
+    parsedData.fba,
+    parsedData.zfs,
+    parsedData.fbaShipments,
+    parsedData.zfsShipments,
+    parsedData.zfsShipmentsReceived,
+    parsedData.skuEanMapper,
+  ]);
 
   return (
     <div className="max-w-full p-4">
@@ -170,7 +181,7 @@ const IntegratedStockParser = () => {
         ) : (
           <>
             <CardHeader>
-              <CardTitle>Integrated Stock Management System</CardTitle>
+              <CardTitle>Upload Files Here: </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -185,7 +196,9 @@ const IntegratedStockParser = () => {
                   <FileUploadSection
                     title="Internal Stock"
                     onChange={(e) => handleFileUpload(e, "internal")}
-                    onRemove={(fileName) => handleRemoveFile("internal", fileName)}
+                    onRemove={(fileName) =>
+                      handleRemoveFile("internal", fileName)
+                    }
                     files={files.internal ? [files.internal] : []}
                   />
                   <FileUploadSection
@@ -203,28 +216,38 @@ const IntegratedStockParser = () => {
                   <FileUploadSection
                     title="FBA Shipments"
                     onChange={(e) => handleFileUpload(e, "fbaShipments")}
-                    onRemove={(fileName) => handleRemoveFile("fbaShipments", fileName)}
+                    onRemove={(fileName) =>
+                      handleRemoveFile("fbaShipments", fileName)
+                    }
                     files={files.fbaShipments}
                     multiple
                   />
                   <FileUploadSection
                     title="ZFS Shipments"
                     onChange={(e) => handleFileUpload(e, "zfsShipments")}
-                    onRemove={(fileName) => handleRemoveFile("zfsShipments", fileName)}
+                    onRemove={(fileName) =>
+                      handleRemoveFile("zfsShipments", fileName)
+                    }
                     files={files.zfsShipments}
                     multiple
                   />
                   <FileUploadSection
                     title="ZFS Shipments Received"
-                    onChange={(e) => handleFileUpload(e, "zfsShipmentsReceived")}
-                    onRemove={(fileName) => handleRemoveFile("zfsShipmentsReceived", fileName)}
+                    onChange={(e) =>
+                      handleFileUpload(e, "zfsShipmentsReceived")
+                    }
+                    onRemove={(fileName) =>
+                      handleRemoveFile("zfsShipmentsReceived", fileName)
+                    }
                     files={files.zfsShipmentsReceived}
                     multiple
                   />
                   <FileUploadSection
                     title="SKU-EAN Mapper"
                     onChange={(e) => handleFileUpload(e, "skuEanMapper")}
-                    onRemove={(fileName) => handleRemoveFile("skuEanMapper", fileName)}
+                    onRemove={(fileName) =>
+                      handleRemoveFile("skuEanMapper", fileName)
+                    }
                     files={files.skuEanMapper ? [files.skuEanMapper] : []}
                   />
                 </div>
