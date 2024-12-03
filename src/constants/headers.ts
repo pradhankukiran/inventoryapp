@@ -1,58 +1,17 @@
+import { internalHeaders } from './headers/internal';
+import { fbaHeaders } from './headers/fba';
+import { zfsHeaders } from './headers/zfs';
+import { fbaShipmentHeaders, zfsShipmentHeaders, zfsShipmentReceivedHeaders } from './headers/shipments';
+import { skuEanMappingHeaders } from './headers/mapping';
+
 export const expectedHeaders = {
-  internal: [
-    "articleNumber",
-    "articleName",
-    "warehouse",
-    "binLocation",
-    "isDefaultBinLocation",
-    "physicalStock",
-    "availableStock",
-    "purchasePrice",
-  ],
-  fba: [
-    "seller-sku",
-    "fulfillment-channel-sku",
-    "asin",
-    "condition-type",
-    "Warehouse-Condition-code",
-    "Quantity Available",
-  ],
-  zfs: [
-    "ean",
-    "partner_article",
-    "partner_article_variant",
-    "partner_variant_size",
-    "zalando_article_variant",
-    "zalando_variant_size",
-    "article_name",
-    "brand",
-    "season",
-    "has_approved_sustainability_related_claim",
-    "sustainability_related_attributes",
-    "article_overlap_status",
-    "status_detail",
-    "status_description",
-    "country",
-    "sellable_zfs_stock",
-    "sellable_pf_stock",
-    "regular_price",
-    "discounted_price",
-    "currency",
-    "status_cluster",
-    "visibility",
-    "visibility_description",
-  ],
-  fbaShipment: [
-    "Händler-SKU",
-    "Titel",
-    "ASIN",
-    "FNSKU",
-    "externe-id",
-    "Zustand",
-    "Wer übernimmt die Vorbereitung?",
-    "Art der Vorbereitung",
-    "Wer etikettiert?",
-    "Versendete Einheiten",
-  ],
-  zfsShipment: ["Shipping notice ID", "EAN", "Received date", "Quantity"],
-};
+  internal: internalHeaders,
+  fba: fbaHeaders,
+  zfs: zfsHeaders,
+  fbaShipment: fbaShipmentHeaders,
+  zfsShipment: zfsShipmentHeaders,
+  zfsShipmentReceived: zfsShipmentReceivedHeaders,
+  skuEanMapping: skuEanMappingHeaders,
+} as const;
+
+export type HeaderTypes = keyof typeof expectedHeaders;

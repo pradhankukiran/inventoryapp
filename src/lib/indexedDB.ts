@@ -6,6 +6,12 @@ const DB_VERSION = 1;
 
 let dbInstance: IDBDatabase | null = null;
 
+interface SerializedFile {
+  name: string;
+  type: string;
+  data: ArrayBuffer;
+}
+
 const getDB = async (): Promise<IDBDatabase> => {
   if (dbInstance) return dbInstance;
 
@@ -28,12 +34,21 @@ const getDB = async (): Promise<IDBDatabase> => {
   });
 };
 
-const serializeFile = async (file: File): Promise<ArrayBuffer> => {
-  return await file.arrayBuffer();
+const serializeFile = async (file: File): Promise<SerializedFile> => {
+  const arrayBuffer = await file.arrayBuffer();
+  return {
+    name: file.name,
+    type: file.type,
+    data: arrayBuffer,
+  };
 };
 
-const serializeFiles = async (files: FileState): Promise<Record<string, ArrayBuffer | ArrayBuffer[] | null>> => {
-  const serialized: Record<string, ArrayBuffer | ArrayBuffer[] | null> = {};
+const deserializeToFile = (serialized: SerializedFile): File => {
+  return new File([serialized.data], serialized.name, { type: serialized.type });
+};
+
+const serializeFiles = async (files: FileState): Promise<Record<string, SerializedFile | SerializedFile[] | null>> => {
+  const serialized: Record<string, SerializedFile | SerializedFile[] | null> = {};
 
   for (const [key, value] of Object.entries(files)) {
     if (Array.isArray(value)) {
@@ -48,8 +63,26 @@ const serializeFiles = async (files: FileState): Promise<Record<string, ArrayBuf
   return serialized;
 };
 
-const deserializeToFile = (buffer: ArrayBuffer, fileName: string): File => {
-  return new File([buffer], fileName, { type: 'text/csv' });
+const deserializeFiles = (serialized: Record<string, SerializedFile | SerializedFile[] | null>): FileState => {
+  const deserialized: FileState = {
+    internal: null,
+    fba: null,
+    zfs: null,
+    fbaShipments: [],
+    zfsShipments: [],
+    zfsShipmentsReceived: [],
+    skuEanMapper: null,
+  };
+
+  for (const [key, value] of Object.entries(serialized)) {
+    if (Array.isArray(value)) {
+      deserialized[key as keyof FileState] = value.map(deserializeToFile) as any;
+    } else if (value) {
+      deserialized[key as keyof FileState] = deserializeToFile(value) as any;
+    }
+  }
+
+  return deserialized;
 };
 
 export const storeFiles = async (files: FileState): Promise<void> => {
@@ -63,7 +96,6 @@ export const storeFiles = async (files: FileState): Promise<void> => {
     const request = store.put(serializedFiles, 'currentFiles');
 
     request.onsuccess = () => {
-      // Wait for the transaction to complete
       transaction.oncomplete = () => resolve();
     };
 
@@ -92,27 +124,7 @@ export const getFiles = async (): Promise<FileState | null> => {
         return;
       }
 
-      const deserializedFiles: FileState = {
-        internal: null,
-        fba: null,
-        zfs: null,
-        fbaShipments: [],
-        zfsShipments: [],
-        zfsShipmentsReceived: [],
-        skuEanMapper: null,
-      };
-
-      for (const [key, value] of Object.entries(serializedFiles)) {
-        if (Array.isArray(value)) {
-          deserializedFiles[key as keyof FileState] = value.map(buffer => 
-            deserializeToFile(buffer, 'file.csv')
-          );
-        } else if (value) {
-          deserializedFiles[key as keyof FileState] = deserializeToFile(value, 'file.csv');
-        }
-      }
-
-      resolve(deserializedFiles);
+      resolve(deserializeFiles(serializedFiles));
     };
 
     request.onerror = () => reject(request.error);

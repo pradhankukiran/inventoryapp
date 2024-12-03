@@ -3,6 +3,8 @@ import { IntegratedStockData } from '@/types/stock';
 import { StockTableRow } from './StockTableRow';
 import { Pagination } from './ui/pagination';
 import { usePagination } from '@/hooks/usePagination';
+import { useTableSort } from '@/hooks/useTableSort';
+import { ArrowUp, ArrowDown } from 'lucide-react';
 
 interface StockTableProps {
   data: IntegratedStockData[];
@@ -10,9 +12,27 @@ interface StockTableProps {
 
 const ITEMS_PER_PAGE = 25;
 
+const COLUMNS = [
+  { key: 'SKU', label: 'SKU' },
+  { key: 'EAN', label: 'EAN' },
+  { key: 'Product Name', label: 'Product Name' },
+  { key: 'Internal Stock Quantity', label: 'Internal Stock' },
+  { key: 'FBA Quantity', label: 'FBA Stock' },
+  { key: 'FBA Pending Shipment', label: 'FBA Pending' },
+  { key: 'ZFS Quantity', label: 'ZFS Stock' },
+  { key: 'ZFS Pending Shipment', label: 'ZFS Pending' },
+] as const;
+
 export const StockTable: React.FC<StockTableProps> = ({ data }) => {
   const [isClient, setIsClient] = useState(false);
-  const { currentPage, totalPages, paginatedItems, goToPage } = usePagination(data, ITEMS_PER_PAGE);
+  const { sortedItems, sortConfig, requestSort } = useTableSort(data, {
+    key: 'SKU',
+    direction: 'asc',
+  });
+  const { currentPage, totalPages, paginatedItems, goToPage } = usePagination(
+    sortedItems,
+    ITEMS_PER_PAGE
+  );
 
   useEffect(() => {
     setIsClient(true);
@@ -22,20 +42,34 @@ export const StockTable: React.FC<StockTableProps> = ({ data }) => {
     return null;
   }
 
+  const renderSortIcon = (columnKey: string) => {
+    if (sortConfig?.key !== columnKey) return null;
+
+    return sortConfig.direction === 'asc' ? (
+      <ArrowUp className="w-4 h-4 ml-1 inline-block" />
+    ) : (
+      <ArrowDown className="w-4 h-4 ml-1 inline-block" />
+    );
+  };
+
   return (
     <div className="space-y-4 bg-white rounded-lg border border-gray-200 shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">EAN</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Name</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Internal Stock</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">FBA Stock</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">FBA Pending</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ZFS Stock</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ZFS Pending</th>
+              {COLUMNS.map((column) => (
+                <th
+                  key={column.key}
+                  onClick={() => requestSort(column.key)}
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center">
+                    {column.label}
+                    {renderSortIcon(column.key)}
+                  </div>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">

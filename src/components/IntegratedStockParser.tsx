@@ -10,8 +10,7 @@ import {
 import { FileUploadSection } from "./FileUploadSection";
 import { StockTable } from "./StockTable";
 import { parseCSVFile } from "@/utils/fileParser";
-import { calculateZFSPendingShipments } from "@/utils/stockCalculations";
-import { integrateStockData } from "@/utils/dataIntegration";
+import { processAndIntegrateData } from "@/utils/dataIntegration";
 import { ParsedData, FileState } from "@/types/stock";
 import { ArrowLeft, RotateCcw } from "lucide-react";
 import { storeFiles, getFiles, clearFiles } from "@/lib/indexedDB";
@@ -219,18 +218,14 @@ const IntegratedStockParser = () => {
 
   useEffect(() => {
     if (Object.values(parsedData).some((data) => data.length > 0)) {
-      const zfsPendingShipments = calculateZFSPendingShipments(
-        parsedData.zfsShipments,
-        parsedData.zfsShipmentsReceived
-      );
-
-      const integratedData = integrateStockData(
+      const integratedData = processAndIntegrateData(
         parsedData.internal,
         parsedData.fba,
         parsedData.zfs,
         parsedData.fbaShipments,
-        parsedData.skuEanMapper,
-        zfsPendingShipments
+        parsedData.zfsShipments,
+        parsedData.zfsShipmentsReceived,
+        parsedData.skuEanMapper
       );
 
       setParsedData((prev) => ({
