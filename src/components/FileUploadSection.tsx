@@ -46,19 +46,19 @@ export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
             {files.map((file, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between px-3 py-2 text-sm bg-gray-50 rounded-md border border-gray-200"
+                className="flex items-center justify-between px-3 py-2 text-sm rounded-md bg-green-50 border border-green-200"
               >
                 <div className="flex items-center space-x-2">
-                  <span className="font-medium text-gray-700">{file.name}</span>
-                  <span className="text-gray-400 text-xs">
+                  <span className="font-medium text-green-700">{file.name}</span>
+                  <span className="text-green-600 text-xs">
                     ({(file.size / 1024).toFixed(1)} KB)
                   </span>
                 </div>
                 <button
                   onClick={() => onRemove(file.name)}
-                  className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                  className="p-1 hover:bg-green-100 rounded-full transition-colors"
                 >
-                  <X size={16} className="text-gray-500" />
+                  <X size={16} className="text-green-600" />
                 </button>
               </div>
             ))}
@@ -67,4 +67,4 @@ export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
       </div>
     </div>
   );
-}
+};

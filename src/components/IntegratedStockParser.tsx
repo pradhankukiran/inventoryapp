@@ -13,7 +13,8 @@ import { parseCSVFile } from "@/utils/fileParser";
 import { calculateZFSPendingShipments } from "@/utils/stockCalculations";
 import { integrateStockData } from "@/utils/dataIntegration";
 import { ParsedData, FileState } from "@/types/stock";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, RotateCcw } from "lucide-react";
+import { storeFiles, getFiles, clearFiles } from "@/lib/indexedDB";
 
 const IntegratedStockParser = () => {
   const [files, setFiles] = useState<FileState>({
@@ -41,6 +42,55 @@ const IntegratedStockParser = () => {
   const [errors, setErrors] = useState<string[]>([]);
   const [showTable, setShowTable] = useState(false);
 
+  useEffect(() => {
+    const loadStoredFiles = async () => {
+      const storedFiles = await getFiles();
+      if (storedFiles) {
+        setFiles(storedFiles);
+        // Parse stored files
+        for (const [key, value] of Object.entries(storedFiles)) {
+          if (Array.isArray(value)) {
+            const results = await Promise.all(value.map(file => parseCSVFile(file)));
+            setParsedData(prev => ({
+              ...prev,
+              [key]: results.flat(),
+            }));
+          } else if (value) {
+            const results = await parseCSVFile(value);
+            setParsedData(prev => ({
+              ...prev,
+              [key]: results,
+            }));
+          }
+        }
+      }
+    };
+
+    loadStoredFiles();
+
+    let pageHidden = false;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        pageHidden = true;
+      }
+    };
+
+    const handleBeforeUnload = async () => {
+      if (pageHidden) {
+        await clearFiles();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
     fileType: keyof FileState
@@ -57,10 +107,14 @@ const IntegratedStockParser = () => {
         fileType === "zfsShipments" ||
         fileType === "zfsShipmentsReceived"
       ) {
-        setFiles((prev) => ({
-          ...prev,
-          [fileType]: [...prev[fileType], ...uploadedFiles],
-        }));
+        setFiles((prev) => {
+          const newFiles = {
+            ...prev,
+            [fileType]: [...prev[fileType], ...uploadedFiles],
+          };
+          storeFiles(newFiles);
+          return newFiles;
+        });
 
         const parsedResults = await Promise.all(
           uploadedFiles.map((file) => parseCSVFile(file))
@@ -72,7 +126,11 @@ const IntegratedStockParser = () => {
           [fileType]: [...prev[fileType], ...flattenedResults],
         }));
       } else {
-        setFiles((prev) => ({ ...prev, [fileType]: uploadedFiles[0] }));
+        setFiles((prev) => {
+          const newFiles = { ...prev, [fileType]: uploadedFiles[0] };
+          storeFiles(newFiles);
+          return newFiles;
+        });
         const results = await parseCSVFile(uploadedFiles[0]);
         setParsedData((prev) => ({
           ...prev,
@@ -89,25 +147,62 @@ const IntegratedStockParser = () => {
     }
   };
 
-  const handleRemoveFile = (fileType: keyof FileState, fileName: string) => {
+  const handleRemoveFile = async (fileType: keyof FileState, fileName: string) => {
     if (Array.isArray(files[fileType])) {
       const updatedFiles = (files[fileType] as File[]).filter(
         (file) => file.name !== fileName
       );
-      setFiles((prev) => ({ ...prev, [fileType]: updatedFiles }));
+      setFiles((prev) => {
+        const newFiles = { ...prev, [fileType]: updatedFiles };
+        storeFiles(newFiles);
+        return newFiles;
+      });
 
-      // Update parsed data by removing the corresponding entries
       const updatedParsedData = parsedData[fileType].filter((_, index) => {
         const fileIndex = (files[fileType] as File[]).findIndex(
           (file) => file.name === fileName
         );
         return index !== fileIndex;
       });
-      setParsedData((prev) => ({ ...prev, [fileType]: updatedParsedData }));
+      setParsedData((prev) => ({
+        ...prev,
+        [fileType]: updatedParsedData,
+      }));
     } else {
-      setFiles((prev) => ({ ...prev, [fileType]: null }));
-      setParsedData((prev) => ({ ...prev, [fileType]: [] }));
+      setFiles((prev) => {
+        const newFiles = { ...prev, [fileType]: null };
+        storeFiles(newFiles);
+        return newFiles;
+      });
+      setParsedData((prev) => ({
+        ...prev,
+        [fileType]: [],
+      }));
     }
+  };
+
+  const handleReset = async () => {
+    await clearFiles();
+    setFiles({
+      internal: null,
+      fba: null,
+      zfs: null,
+      fbaShipments: [],
+      zfsShipments: [],
+      zfsShipmentsReceived: [],
+      skuEanMapper: null,
+    });
+    setParsedData({
+      internal: [],
+      fba: [],
+      zfs: [],
+      fbaShipments: [],
+      zfsShipments: [],
+      zfsShipmentsReceived: [],
+      skuEanMapper: [],
+      integrated: [],
+    });
+    setShowTable(false);
   };
 
   const handleProcessFiles = () => {
@@ -180,8 +275,15 @@ const IntegratedStockParser = () => {
           </>
         ) : (
           <>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <CardTitle>Upload Files Here: </CardTitle>
+              <button
+                onClick={handleReset}
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Reset All
+              </button>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
