@@ -18,9 +18,7 @@ import { storeFiles, getFiles, clearFiles } from "@/lib/indexedDB";
 const IntegratedStockParser = () => {
   const [files, setFiles] = useState<FileState>({
     internal: null,
-    fba: null,
     zfs: null,
-    fbaShipments: [],
     zfsShipments: [],
     zfsShipmentsReceived: [],
     skuEanMapper: null,
@@ -28,9 +26,7 @@ const IntegratedStockParser = () => {
 
   const [parsedData, setParsedData] = useState<ParsedData>({
     internal: [],
-    fba: [],
     zfs: [],
-    fbaShipments: [],
     zfsShipments: [],
     zfsShipmentsReceived: [],
     skuEanMapper: [],
@@ -49,14 +45,16 @@ const IntegratedStockParser = () => {
         // Parse stored files
         for (const [key, value] of Object.entries(storedFiles)) {
           if (Array.isArray(value)) {
-            const results = await Promise.all(value.map(file => parseCSVFile(file)));
-            setParsedData(prev => ({
+            const results = await Promise.all(
+              value.map((file) => parseCSVFile(file))
+            );
+            setParsedData((prev) => ({
               ...prev,
               [key]: results.flat(),
             }));
           } else if (value) {
             const results = await parseCSVFile(value);
-            setParsedData(prev => ({
+            setParsedData((prev) => ({
               ...prev,
               [key]: results,
             }));
@@ -66,28 +64,6 @@ const IntegratedStockParser = () => {
     };
 
     loadStoredFiles();
-
-    let pageHidden = false;
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        pageHidden = true;
-      }
-    };
-
-    const handleBeforeUnload = async () => {
-      if (pageHidden) {
-        await clearFiles();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
   }, []);
 
   const handleFileUpload = async (
@@ -101,11 +77,7 @@ const IntegratedStockParser = () => {
     const uploadedFiles = Array.from(event.target.files);
 
     try {
-      if (
-        fileType === "fbaShipments" ||
-        fileType === "zfsShipments" ||
-        fileType === "zfsShipmentsReceived"
-      ) {
+      if (fileType === "zfsShipments" || fileType === "zfsShipmentsReceived") {
         setFiles((prev) => {
           const newFiles = {
             ...prev,
@@ -146,7 +118,10 @@ const IntegratedStockParser = () => {
     }
   };
 
-  const handleRemoveFile = async (fileType: keyof FileState, fileName: string) => {
+  const handleRemoveFile = async (
+    fileType: keyof FileState,
+    fileName: string
+  ) => {
     if (Array.isArray(files[fileType])) {
       const updatedFiles = (files[fileType] as File[]).filter(
         (file) => file.name !== fileName
@@ -184,18 +159,14 @@ const IntegratedStockParser = () => {
     await clearFiles();
     setFiles({
       internal: null,
-      fba: null,
       zfs: null,
-      fbaShipments: [],
       zfsShipments: [],
       zfsShipmentsReceived: [],
       skuEanMapper: null,
     });
     setParsedData({
       internal: [],
-      fba: [],
       zfs: [],
-      fbaShipments: [],
       zfsShipments: [],
       zfsShipmentsReceived: [],
       skuEanMapper: [],
@@ -206,7 +177,7 @@ const IntegratedStockParser = () => {
 
   const handleProcessFiles = () => {
     const allRequiredFilesUploaded =
-      files.internal && files.fba && files.zfs && files.skuEanMapper;
+      files.internal && files.zfs && files.skuEanMapper;
 
     if (!allRequiredFilesUploaded) {
       setErrors((prev) => [...prev, "Please upload all required files first"]);
@@ -220,9 +191,7 @@ const IntegratedStockParser = () => {
     if (Object.values(parsedData).some((data) => data.length > 0)) {
       const integratedData = processAndIntegrateData(
         parsedData.internal,
-        parsedData.fba,
         parsedData.zfs,
-        parsedData.fbaShipments,
         parsedData.zfsShipments,
         parsedData.zfsShipmentsReceived,
         parsedData.skuEanMapper
@@ -235,9 +204,7 @@ const IntegratedStockParser = () => {
     }
   }, [
     parsedData.internal,
-    parsedData.fba,
     parsedData.zfs,
-    parsedData.fbaShipments,
     parsedData.zfsShipments,
     parsedData.zfsShipmentsReceived,
     parsedData.skuEanMapper,
@@ -256,7 +223,7 @@ const IntegratedStockParser = () => {
                 <ArrowLeft className="w-4 h-4" />
                 Back to Files
               </button>
-              <CardTitle>Integrated Stock Data</CardTitle>
+              <CardTitle>ZFS Stock Overview</CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -299,25 +266,10 @@ const IntegratedStockParser = () => {
                     files={files.internal ? [files.internal] : []}
                   />
                   <FileUploadSection
-                    title="FBA Stock"
-                    onChange={(e) => handleFileUpload(e, "fba")}
-                    onRemove={(fileName) => handleRemoveFile("fba", fileName)}
-                    files={files.fba ? [files.fba] : []}
-                  />
-                  <FileUploadSection
                     title="ZFS Stock"
                     onChange={(e) => handleFileUpload(e, "zfs")}
                     onRemove={(fileName) => handleRemoveFile("zfs", fileName)}
                     files={files.zfs ? [files.zfs] : []}
-                  />
-                  <FileUploadSection
-                    title="FBA Shipments"
-                    onChange={(e) => handleFileUpload(e, "fbaShipments")}
-                    onRemove={(fileName) =>
-                      handleRemoveFile("fbaShipments", fileName)
-                    }
-                    files={files.fbaShipments}
-                    multiple
                   />
                   <FileUploadSection
                     title="ZFS Shipments"

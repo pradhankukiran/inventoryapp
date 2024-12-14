@@ -4,20 +4,10 @@ export interface ProcessedInternalStock {
   "Internal Stock Quantity": number;
 }
 
-export interface ProcessedFBAStock {
-  SKU: string;
-  "FBA Quantity": number;
-}
-
 export interface ProcessedZFSStock {
   EAN: string;
   "Product Name": string;
   "ZFS Quantity": number;
-}
-
-export interface ProcessedFBAShipment {
-  SKU: string;
-  "FBA Shipped Quantity": number;
 }
 
 export interface ProcessedZFSShipment {
