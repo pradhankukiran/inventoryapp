@@ -5,7 +5,7 @@ import { Pagination } from "./ui/pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { useTableSort } from "@/hooks/useTableSort";
 import { ArrowUp, ArrowDown } from "lucide-react";
-import { ExportButton } from "./ExportButton.tsx";
+import { ExportButton } from "./ExportButton";
 
 interface StockTableProps {
   data: IntegratedStockData[];
@@ -54,7 +54,11 @@ export const StockTable: React.FC<StockTableProps> = ({ data }) => {
   return (
     <div className="space-y-4">
       <div className="flex justify-end mb-4">
-        <ExportButton data={data} />
+        <ExportButton 
+          data={data} 
+          label="Export Table Data"
+          filename="stock-data"
+        />
       </div>
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <div className="overflow-x-auto">

@@ -6,18 +6,19 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { IntegratedStockData } from "@/types/stock";
 import { exportData } from "@/utils/exporters";
 import type { ExportFormat } from "@/utils/exporters/types";
 
 interface ExportButtonProps {
-  data: IntegratedStockData[];
+  data: any[];
+  label: string;
+  filename: string;
 }
 
-export const ExportButton: React.FC<ExportButtonProps> = ({ data }) => {
+export const ExportButton: React.FC<ExportButtonProps> = ({ data, label, filename }) => {
   const handleExport = (format: ExportFormat) => {
     exportData(data, format, {
-      filename: "zfs-stock-data",
+      filename,
       timestamp: true,
     });
   };
@@ -26,7 +27,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ data }) => {
     <DropdownMenu>
       <DropdownMenuTrigger className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
         <Download className="w-4 h-4" />
-        Export Data
+        {label}
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         <DropdownMenuItem onClick={() => handleExport("csv")}>

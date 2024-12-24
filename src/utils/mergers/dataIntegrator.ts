@@ -4,6 +4,7 @@ import {
   ProcessedZFSStock,
   SKUEANMapping,
 } from "@/types/processors";
+import { filterDuplicates } from "../filters/duplicateFilter";
 
 export function integrateStockData(
   internalStock: ProcessedInternalStock[],
@@ -46,7 +47,9 @@ export function integrateStockData(
     }
   });
 
-  return Array.from(integratedMap.values()).sort((a, b) =>
+  const integrated = Array.from(integratedMap.values()).sort((a, b) =>
     a.SKU.localeCompare(b.SKU)
   );
+
+  return filterDuplicates(integrated);
 }
