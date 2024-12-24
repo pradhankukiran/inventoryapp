@@ -55,7 +55,7 @@ export const FileUploadGrid: React.FC<FileUploadGridProps> = ({
           files={files.skuEanMapper ? [files.skuEanMapper] : []}
         />
         <FileUploadSection
-          title="ZFS Sales Data File (Optional)"
+          title="ZFS Sales Data File"
           onChange={(e) => onFileChange(e, "zfsSales")}
           onRemove={(name) => onFileRemove(name, "zfsSales")}
           files={files.zfsSales ? [files.zfsSales] : []}
