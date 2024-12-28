@@ -56,7 +56,7 @@ export const StockTable: React.FC<StockTableProps> = ({ data }) => {
       <div className="flex justify-end mb-4">
         <ExportButton 
           data={data} 
-          label="Export Table Data"
+          label="Export Stock Overview"
           filename="stock-data"
         />
       </div>

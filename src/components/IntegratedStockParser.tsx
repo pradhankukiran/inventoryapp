@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import {
   Card,
@@ -10,8 +10,7 @@ import { FileUploadGrid } from "./FileUploadGrid";
 import { StockTable } from "./StockTable";
 import { RecommendationsTable } from "./RecommendationsTable";
 import { useFileProcessing } from "@/hooks/useFileProcessing";
-import { ParsedData, FileState } from "@/types/stock";
-import { CategoryRecommendation } from "@/types/sales";
+import { Tabs } from "./ui/tabs";
 import { RotateCcw } from "lucide-react";
 
 const IntegratedStockParser: React.FC = () => {
@@ -26,6 +25,25 @@ const IntegratedStockParser: React.FC = () => {
     processFiles,
     resetAll,
   } = useFileProcessing();
+
+  const tabs = [
+    {
+      id: "stock",
+      label: "Stock Overview",
+      content: parsedData.integrated.length > 0 ? (
+        <StockTable data={parsedData.integrated} />
+      ) : null,
+    },
+    {
+      id: "recommendations",
+      label: "Stock Recommendations",
+      content: recommendations.length > 0 ? (
+        <RecommendationsTable recommendations={recommendations} />
+      ) : null,
+    },
+  ];
+
+  const showTabs = parsedData.integrated.length > 0 || recommendations.length > 0;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -63,17 +81,9 @@ const IntegratedStockParser: React.FC = () => {
                 Process Files
               </button>
             </div>
+
+            {showTabs && <Tabs tabs={tabs} />}
           </div>
-
-          {parsedData.integrated.length > 0 && (
-            <div className="mt-8">
-              <StockTable data={parsedData.integrated} />
-            </div>
-          )}
-
-          {recommendations.length > 0 && (
-            <RecommendationsTable recommendations={recommendations} />
-          )}
         </CardContent>
       </Card>
     </div>

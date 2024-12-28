@@ -1,35 +1,48 @@
-import { ZFSSaleEntry, CategoryRecommendation } from "@/types/sales";
-import { CATEGORY_STOCK_DAYS } from "@/constants/stockRecommendations";
+import { ZFSSaleEntry, ArticleRecommendation } from "@/types/sales";
+import { calculateSalesMetrics } from "./salesAnalytics";
+import { calculateDaysBetween } from "./dateCalculator";
+import { safeDivide, safeNumber } from "../formatters/numberFormatter";
+
+function calculateRecommendedDays(metrics: { 
+  totalSales: number, 
+  uniqueDays: Set<string>
+}): number {
+  const salesFrequency = safeDivide(
+    metrics.totalSales,
+    metrics.uniqueDays.size
+  );
+  
+  if (salesFrequency >= 2) return 14;
+  if (salesFrequency >= 1) return 21;
+  return 30;
+}
 
 export function calculateStockRecommendations(
   salesData: ZFSSaleEntry[]
-): CategoryRecommendation[] {
-  // Group sales by category
-  const salesByCategory = new Map<string, number>();
-  const categoryCounts = new Map<string, number>();
+): ArticleRecommendation[] {
+  const salesMetrics = calculateSalesMetrics(salesData);
+  const recommendations: ArticleRecommendation[] = [];
 
-  salesData.forEach(sale => {
-    const category = sale.category || 'default';
-    salesByCategory.set(
-      category, 
-      (salesByCategory.get(category) || 0) + sale.quantity
+  salesMetrics.forEach((metrics, articleId) => {
+    const daysInPeriod = calculateDaysBetween(
+      metrics.firstSaleDate,
+      metrics.lastSaleDate
     );
-    categoryCounts.set(
-      category, 
-      (categoryCounts.get(category) || 0) + 1
-    );
-  });
 
-  // Calculate recommendations
-  return Array.from(salesByCategory.entries()).map(([category, totalSales]) => {
-    const recommendedDays = CATEGORY_STOCK_DAYS[category] || CATEGORY_STOCK_DAYS.default;
-    const averageDailySales = totalSales / 30; // Assuming 30 days of sales data
-    
-    return {
-      category,
+    const averageDailySales = safeDivide(metrics.totalSales, daysInPeriod);
+    const recommendedDays = calculateRecommendedDays(metrics);
+
+    recommendations.push({
+      articleId,
+      articleName: metrics.articleName || 'Unknown Article',
       recommendedDays,
-      averageDailySales,
-      recommendedStock: Math.ceil(averageDailySales * recommendedDays)
-    };
+      averageDailySales: safeNumber(averageDailySales),
+      recommendedStock: Math.ceil(safeNumber(averageDailySales * recommendedDays)),
+      totalSales: metrics.totalSales,
+      lastSaleDate: metrics.lastSaleDate,
+      firstSaleDate: metrics.firstSaleDate
+    });
   });
+
+  return recommendations.sort((a, b) => b.totalSales - a.totalSales);
 }
